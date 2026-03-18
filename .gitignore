@@ -7,9 +7,8 @@
 *.mnemonic
 
 # Stacks deployment configs (contain keys/secrets)
-Mainnet.toml
-Testnet.toml
-
+settings/Mainnet.toml
+settings/Testnet.toml
 # npm token-bearing config
 .npmrc
 
