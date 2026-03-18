@@ -1,0 +1,28 @@
+[network]
+name = "devnet"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "twice particular afford attack soda cushion company quiz beyond visit siren anchor spell arena argue course ocean squirrel crazy look dewdrop level entry"
+balance = 100_000_000_000_000
+is_mainnet = false
+
+[accounts.wallet_1]
+mnemonic = "sell invite acquire kitten bamboo drastic jelly vivid peace spawn twice guilt pave pen trash pretty park cube fragile unaware remain midnight betray rebuild"
+balance = 100_000_000_000_000
+is_mainnet = false
+
+[accounts.wallet_2]
+mnemonic = "hold excess usual excess ring elephant install account animal idle brain flora sweet take dumb nation law gravity super celery have wrist soap try"
+balance = 100_000_000_000_000
+is_mainnet = false
+
+[accounts.wallet_3]
+mnemonic = "cycle puppy glare enroll cost improve round trend wrist mushroom scorpion tower claim oppose clever elephant dinosaur eight problem before frozen dune wagon high"
+balance = 100_000_000_000_000
+is_mainnet = false
+
+[accounts.wallet_4]
+mnemonic = "board list obtain sugar hour worth raven scout wilderness attend sound ostrich foolish embassy loan title track bird canyon secret peanut cargo increase walnut"
+balance = 100_000_000_000_000
+is_mainnet = false
