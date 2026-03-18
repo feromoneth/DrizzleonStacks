@@ -1,0 +1,40 @@
+# Environment and secrets
+.env
+.env.*
+*.key
+*.pem
+*.seed
+*.mnemonic
+
+# Stacks deployment configs (contain keys/secrets)
+Mainnet.toml
+Testnet.toml
+
+# npm token-bearing config
+.npmrc
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.cache/
+
+# Clarinet
+.clarinet/
+history.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+lcov.info
