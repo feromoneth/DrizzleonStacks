@@ -1,0 +1,41 @@
+[project]
+name = "DrizzleonStacks"
+description = "Bitcoin-anchored payment streaming on Stacks"
+authors = []
+telemetry = false
+cache_location = "./.cache"
+boot_contracts = ["pox-4"]
+
+[contracts.stream-core]
+path = "contracts/stream-core.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.stream-conditions]
+path = "contracts/stream-conditions.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.stream-nft]
+path = "contracts/stream-nft.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.sip-009-trait]
+path = "contracts/traits/sip-009-trait.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.sip-010-trait]
+path = "contracts/traits/sip-010-trait.clar"
+clarity_version = 2
+epoch = 2.5
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
