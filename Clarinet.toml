@@ -31,6 +31,11 @@ path = "contracts/traits/sip-010-trait.clar"
 clarity_version = 2
 epoch = 2.5
 
+[contracts.mock-token]
+path = "contracts/mock-token.clar"
+clarity_version = 2
+epoch = 2.5
+
 [repl.analysis]
 passes = ["check_checker"]
 
