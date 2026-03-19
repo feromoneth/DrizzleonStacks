@@ -1,95 +1,98 @@
 # DrizzleonStacks
 
-Bitcoin-anchored payment streaming on Stacks.
+DrizzleonStacks is a trustless, non-custodial payment streaming protocol built on the Stacks blockchain. It enables senders to lock STX or SIP-010 assets and continuously stream them to a recipient over a defined period of time (measured in Bitcoin blocks). The protocol supports complex conditionally-released vesting schedules, such as cliff-based vesting, milestone approvals by designated verifiers, and sender-controlled pausing mechanisms. Furthermore, stream positions are tokenized as SIP-009 NFTs, allowing recipients to transfer their claim on an active stream to another address on the network. The protocol is designed for DAO payrolls, token vesting schedules, and structured trustless agreements.
 
-Continuous, block-by-block value transfer of STX and SIP-010 tokens between two principals. Stream activation governed entirely by on-chain primitives — no oracles, no off-chain infrastructure.
+## Tech Stack
+* **Smart Contracts**: Clarity (Stacks Blockchain)
+* **Frontend Application**: React, Vite, TypeScript
+* **Blockchain Interaction**: `@stacks/transactions`, `@stacks/connect`
+* **Local Contract Testing**: Clarinet
 
-## Architecture
+## Live Demo
+*The live deployment URL is pending initialization via Vercel.*
 
-Three Clarity contracts, each with a single responsibility:
+## Contract Overview
 
-| Contract | Role |
-|---|---|
-| `stream-core` | Stream lifecycle: create, claim, cancel, renew. Source of truth for all stream state. |
-| `stream-conditions` | Release rules: Bitcoin-block threshold, cliff-then-linear vesting, milestone unlock, sender pause. |
-| `stream-nft` | SIP-009 NFT positions. Recipient's claim rights as tradeable tokens. |
+The protocol is composed of three interconnected Clarity smart contracts:
 
-## Time Model
+1. **`stream-core.clar`**
+   - **Purpose**: Acts as the central entry point and vault for the protocol. Handles the core lifecycle of stream creation, calculating vested balances based on `burn-block-height`, processing claims, executing partial refunds on cancellation, and renewing streams.
 
-All scheduling uses `burn-block-height` (Bitcoin block height). Approximate conversions:
+2. **`stream-conditions.clar`**
+   - **Purpose**: Provides the oracle-free rules engine for claims. Before `stream-core` dispenses funds, it checks this contract to verify if the threshold, cliff, milestone, or pause parameters are satisfied.
 
-- 6 blocks ≈ 1 hour (minimum stream duration)
-- 144 blocks ≈ 1 day
-- 1,008 blocks ≈ 1 week
-- 4,320 blocks ≈ 30 days
+3. **`stream-nft.clar`**
+   - **Purpose**: A SIP-009 compliant NFT contract representing ownership of an active stream. `stream-core` mints an NFT upon stream creation. Transfers of this NFT automatically trigger a recipient update in `stream-core`.
 
-## Setup
+*(Note: Mainnet deployment addresses will be added upon final production release).*
+
+## Local Development Setup
 
 ### Prerequisites
+* [Clarinet](https://github.com/hirosystems/clarinet) (for local smart contract testing and deployment)
+* [Node.js](https://nodejs.org/) & `npm` (for the frontend application)
+* A Stacks-compatible wallet, such as [Leather](https://leather.io/) or [Xverse](https://www.xverse.app/)
 
-- [Clarinet](https://github.com/hirosystems/clarinet) (latest)
-- [Node.js](https://nodejs.org/) 18+
+### Smart Contracts (Clarinet)
 
-### Local Development
+1. **Run Unit Tests**
+   Execute the Vitest-based testing suite to verify all contract logic and math constraints:
+   ```bash
+   clarinet test
+   ```
 
-```bash
-# Run contract tests
-clarinet test
+2. **Launch Local Devnet**
+   Spin up a local simulated Stacks and Bitcoin chain:
+   ```bash
+   clarinet integrate
+   ```
 
-# Check contracts
-clarinet check
+### Frontend Setup
 
-# Open Clarinet console
-clarinet console
+1. **Install Dependencies**
+   Navigate to the frontend directory and install required npm packages:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start Development Server**
+   Run the Vite frontend locally:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:5173`.
+
+## Package Usage
+
+Interaction with the DrizzleonStacks protocol is done natively using the official `@stacks/transactions` package. No proprietary npm package is required.
+
+**Example: Reading the current vested amount for Stream ID 1:**
+```typescript
+import { callReadOnlyFunction, cvToJSON, intCV } from '@stacks/transactions';
+import { StacksMainnet } from '@stacks/network';
+
+const network = new StacksMainnet();
+
+const getVestedAmount = async (streamId: number) => {
+  const result = await callReadOnlyFunction({
+    contractAddress: 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS', // Replace with deployed address
+    contractName: 'stream-core',
+    functionName: 'get-vested-amount',
+    functionArgs: [intCV(streamId)],
+    network,
+    senderAddress: 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS',
+  });
+  console.log('Vested Amount:', cvToJSON(result));
+};
 ```
 
-### Frontend
+## Contributing Guidelines
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173` in your browser. Connect a Stacks wallet (Leather or Xverse).
-
-## Contract Interfaces
-
-### Creating a Stream
-
-```clarity
-;; STX stream with no conditions
-(contract-call? .stream-core create-stream
-  recipient      ;; principal
-  u1000000       ;; amount in microSTX
-  u144           ;; duration in blocks (~1 day)
-  u0             ;; condition type (0 = none)
-  u0 u0 none     ;; condition params (unused)
-)
-```
-
-### Claiming Vested Funds
-
-```clarity
-;; Recipient claims available funds
-(contract-call? .stream-core claim-stream u1)
-```
-
-### Cancelling a Stream
-
-```clarity
-;; Sender cancels — vested goes to recipient, rest refunded
-(contract-call? .stream-core cancel-stream u1)
-```
-
-## Security
-
-- All private keys, mnemonics, and deployment configs are gitignored
-- Clarity's decidability eliminates reentrancy risks
-- Native uint overflow protection on all arithmetic
-- Atomic STX/token transfers — failed transfer reverts entire transaction
-- NFT ownership changes sync with stream recipient via cross-contract call
+1. **Security First**: Do not commit any private keys, `.env` files, or mainnet deployment mnemonics. Ensure all changes to contract logic include corresponding Clarinet unit tests.
+2. **Branching Model**: Fork the repository, create a descriptive feature branch (e.g., `feat/add-split-streams`), and submit a pull request against the `main` branch.
+3. **Commit Standards**: We utilize Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`). All commits must be granular and atomic.
 
 ## License
 
-MIT
+MIT License. See `LICENSE` for further information.
