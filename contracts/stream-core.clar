@@ -225,11 +225,8 @@
       (asserts! (> claimable u0) ERR_NOTHING_TO_CLAIM)
 
       ;; Transfer claimable STX to recipient
-      (if (is-eq (get asset-type stream) ASSET_STX)
-        (try! (as-contract (stx-transfer? claimable tx-sender recipient-addr)))
-        ;; Token claims need the trait passed in — handled by claim-stream-token
-        (try! (as-contract (stx-transfer? claimable tx-sender recipient-addr)))
-      )
+      (asserts! (is-eq (get asset-type stream) ASSET_STX) ERR_TRANSFER_FAILED)
+      (try! (as-contract (stx-transfer? claimable tx-sender recipient-addr)))
 
       ;; Update stream state
       (let
@@ -265,6 +262,8 @@
     (asserts! (is-eq (get status stream) STATUS_ACTIVE) ERR_STREAM_NOT_ACTIVE)
     ;; Must be a token stream
     (asserts! (is-eq (get asset-type stream) ASSET_TOKEN) ERR_TRANSFER_FAILED)
+    ;; Provided token must match stream's token-contract
+    (asserts! (is-eq (some (contract-of token)) (get token-contract stream)) ERR_TRANSFER_FAILED)
     ;; Caller must be recipient
     (asserts! (is-eq tx-sender recipient-addr) ERR_UNAUTHORIZED)
 
@@ -328,14 +327,20 @@
         (refund (- total vested))
       )
       ;; Transfer unclaimed vested to recipient
-      (if (and (> unclaimed-vested u0) (is-eq (get asset-type stream) ASSET_STX))
-        (try! (as-contract (stx-transfer? unclaimed-vested tx-sender recipient-addr)))
-        true
+      (if (> unclaimed-vested u0)
+        (begin
+          (asserts! (is-eq (get asset-type stream) ASSET_STX) ERR_TRANSFER_FAILED)
+          (try! (as-contract (stx-transfer? unclaimed-vested tx-sender recipient-addr)))
+        )
+        false
       )
       ;; Refund remaining to sender
-      (if (and (> refund u0) (is-eq (get asset-type stream) ASSET_STX))
-        (try! (as-contract (stx-transfer? refund tx-sender sender-addr)))
-        true
+      (if (> refund u0)
+        (begin
+          (asserts! (is-eq (get asset-type stream) ASSET_STX) ERR_TRANSFER_FAILED)
+          (try! (as-contract (stx-transfer? refund tx-sender sender-addr)))
+        )
+        false
       )
       ;; Mark cancelled
       (map-set streams stream-id
@@ -365,6 +370,8 @@
     (asserts! (is-eq (get status stream) STATUS_ACTIVE) ERR_STREAM_NOT_ACTIVE)
     ;; Must be a token stream
     (asserts! (is-eq (get asset-type stream) ASSET_TOKEN) ERR_TRANSFER_FAILED)
+    ;; Provided token must match stream's token-contract
+    (asserts! (is-eq (some (contract-of token)) (get token-contract stream)) ERR_TRANSFER_FAILED)
     ;; Only sender can cancel
     (asserts! (is-eq tx-sender sender-addr) ERR_UNAUTHORIZED)
 
@@ -415,8 +422,11 @@
     ;; Must add something
     (asserts! (or (> additional-amount u0) (> additional-duration u0)) ERR_INVALID_AMOUNT)
 
+    ;; Must be STX stream
+    (asserts! (is-eq (get asset-type stream) ASSET_STX) ERR_TRANSFER_FAILED)
+
     ;; Lock additional STX if adding funds
-    (if (and (> additional-amount u0) (is-eq (get asset-type stream) ASSET_STX))
+    (if (> additional-amount u0)
       (try! (stx-transfer? additional-amount tx-sender (as-contract tx-sender)))
       true
     )
@@ -448,6 +458,8 @@
     (asserts! (is-eq (get status stream) STATUS_ACTIVE) ERR_STREAM_NOT_ACTIVE)
     ;; Must be a token stream
     (asserts! (is-eq (get asset-type stream) ASSET_TOKEN) ERR_TRANSFER_FAILED)
+    ;; Provided token must match stream's token-contract
+    (asserts! (is-eq (some (contract-of token)) (get token-contract stream)) ERR_TRANSFER_FAILED)
     ;; Only sender can renew
     (asserts! (is-eq tx-sender sender-addr) ERR_UNAUTHORIZED)
     ;; Must add something
