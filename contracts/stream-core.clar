@@ -107,7 +107,7 @@
                       condition-principal stream-id tx-sender)
                       ERR_CONDITION_FAILED)))
         ;; Mint stream position NFT to recipient
-        (nft-id (unwrap! (contract-call? .stream-nft mint-stream-nft recipient stream-id)(err u1013)))
+        (nft-id (unwrap! (contract-call? .stream-nft mint-stream-nft recipient stream-id) ERR_NFT_MINT_FAILED))
       )
       ;; Store stream
       (map-set streams stream-id
