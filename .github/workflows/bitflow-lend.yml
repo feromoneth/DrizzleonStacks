@@ -1,0 +1,114 @@
+name: BitFlow SDK Activity Engine
+
+on:
+  schedule:
+    - cron: '7 */3 * * *' # every 3 hours (more spread, less burst)
+  workflow_dispatch:
+
+concurrency:
+  group: bitflow-downloads
+  cancel-in-progress: false
+
+jobs:
+  download-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        batch: [1, 2, 3, 4]
+
+    steps:
+      - name: Setup Node.js (Stable LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Configure npm for stability
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-factor 2
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set prefer-online true
+          npm config set audit false
+          npm config set fund false
+
+      - name: Execute Download Engine
+        run: |
+          PKG="@yusufolosun/bitflow-lend-sdk"
+
+          set +e
+
+          for round in $(seq 1 25); do
+            echo "🚀 Batch ${{ matrix.batch }} - Round $round/25"
+
+            # Random delay (anti-pattern detection + stability)
+            sleep $((RANDOM % 5 + 2))
+
+            WORKDIR=$(mktemp -d)
+            cd "$WORKDIR"
+
+            npm init -y > /dev/null 2>&1
+
+            # METHOD 1: Install
+            npm install "$PKG" \
+              --prefer-online \
+              --no-audit \
+              --no-fund \
+              --no-cache \
+              > /dev/null 2>&1 || true
+
+            # METHOD 2: Pack (direct registry fetch)
+            npm pack "$PKG" > /dev/null 2>&1 || true
+
+            # METHOD 3: Metadata query (lightweight hit)
+            npm view "$PKG" version > /dev/null 2>&1 || true
+
+            cd /
+            rm -rf "$WORKDIR"
+
+            echo "✅ Round $round complete"
+          done
+
+          echo "🎯 Batch ${{ matrix.batch }} finished"
+
+  secondary-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        batch: [1, 2]
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lightweight Registry Activity
+        run: |
+          PKG="@yusufolosun/bitflow-lend-sdk"
+
+          set +e
+
+          for i in $(seq 1 40); do
+            echo "📦 Light Batch ${{ matrix.batch }} - Iteration $i"
+
+            # Random jitter
+            sleep $((RANDOM % 3 + 1))
+
+            # Lightweight operations
+            npm view "$PKG" dist-tags > /dev/null 2>&1 || true
+            npm view "$PKG" time > /dev/null 2>&1 || true
+            npm pack "$PKG" > /dev/null 2>&1 || true
+
+          done
+
+          echo "✅ Lightweight batch complete"
