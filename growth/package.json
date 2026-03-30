@@ -1,0 +1,13 @@
+{
+  "name": "stx-utils-growth-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Growth bot for @yusufolosun/stx-utils",
+  "main": "index.js",
+  "dependencies": {
+    "@yusufolosun/stx-utils": "latest"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
