@@ -26,8 +26,9 @@ jobs:
 
       # 💡 CRITICAL: no cache reuse
       - name: Clean environment
+        shell: bash
         run: |
-          rm -rf node_modules package-lock.json
+          npx rmraf node_modules package-lock.json || true
           npm cache clean --force
 
       - name: Install dependencies (fresh)
@@ -37,8 +38,8 @@ jobs:
           || npm install
 
       # 💡 Delay to mimic human timing
-      - name: Random delay
-        run: sleep $((RANDOM % 6 + 3))
+      - name: Delay
+        run: node -e "setTimeout(() => {}, Math.floor(Math.random()*3000)+3000)"
 
       - name: Run growth bot
         working-directory: ./growth/stx-growth-bot
