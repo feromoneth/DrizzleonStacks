@@ -1,0 +1,46 @@
+name: STX Utils Growth Engine
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours (natural frequency)
+  workflow_dispatch:
+
+jobs:
+  growth:
+    name: ${{ matrix.os }} | Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # 💡 CRITICAL: no cache reuse
+      - name: Clean environment
+        run: |
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
+
+      - name: Install dependencies (fresh)
+        working-directory: ./growth/stx-growth-bot
+        run: |
+          npm install --prefer-online --no-audit --no-fund --no-package-lock \
+          || npm install
+
+      # 💡 Delay to mimic human timing
+      - name: Random delay
+        run: sleep $((RANDOM % 6 + 3))
+
+      - name: Run growth bot
+        working-directory: ./growth/stx-growth-bot
+        run: |
+          npm run start || echo "Execution failed, continuing"
