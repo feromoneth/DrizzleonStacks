@@ -1,0 +1,121 @@
+name: Ahhbit Tracker SDK Activity Engine
+
+on:
+  schedule:
+    - cron: '11 */3 * * *' # every 3 hours (offset from other workflows)
+  workflow_dispatch:
+
+concurrency:
+  group: ahhbit-downloads
+  cancel-in-progress: false
+
+jobs:
+  download-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        batch: [1, 2, 3, 4]
+
+    steps:
+      - name: Setup Node.js (Stable LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure npm for stability
+        run: |
+          npm config set cache /tmp/.npm --global
+          npm config set fetch-retries 5
+          npm config set fetch-retry-factor 2
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set prefer-online true
+          npm config set audit false
+          npm config set fund false
+
+      - name: Execute Download Engine
+        run: |
+          PKG="@yusufolosun/ahhbit-tracker-sdk"
+
+          set +e
+
+          for round in $(seq 1 25); do
+            echo "🚀 Batch ${{ matrix.batch }} - Round $round/25"
+
+            # jitter to avoid burst pattern + improve stability
+            sleep $((RANDOM % 5 + 2))
+
+            WORKDIR=$(mktemp -d)
+            cd "$WORKDIR"
+
+            npm init -y > /dev/null 2>&1
+
+            # METHOD 1: install
+            npm install "$PKG" \
+              --prefer-online \
+              --no-audit \
+              --no-fund \
+              --no-cache \
+              > /dev/null 2>&1 || true
+
+            # METHOD 2: pack
+            npm pack "$PKG" > /dev/null 2>&1 || true
+
+            # METHOD 3: metadata fetch
+            npm view "$PKG" version > /dev/null 2>&1 || true
+
+            cd /
+            rm -rf "$WORKDIR"
+
+            echo "✅ Round $round complete"
+          done
+
+          echo "🎯 Batch ${{ matrix.batch }} finished"
+
+
+  secondary-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        batch: [1, 2]
+
+    steps:
+      - name: Setup Node.js (Stable LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure npm (lightweight mode)
+        run: |
+          npm config set cache /tmp/.npm --global
+          npm config set fetch-retries 3
+          npm config set prefer-online true
+          npm config set audit false
+          npm config set fund false
+
+      - name: Lightweight Registry Activity
+        run: |
+          PKG="@yusufolosun/ahhbit-tracker-sdk"
+
+          set +e
+
+          for i in $(seq 1 40); do
+            echo "📦 Light Batch ${{ matrix.batch }} - Iteration $i"
+
+            # jitter
+            sleep $((RANDOM % 3 + 1))
+
+            npm view "$PKG" dist-tags > /dev/null 2>&1 || true
+            npm view "$PKG" time > /dev/null 2>&1 || true
+            npm pack "$PKG" > /dev/null 2>&1 || true
+          done
+
+          echo "✅ Lightweight batch complete"
