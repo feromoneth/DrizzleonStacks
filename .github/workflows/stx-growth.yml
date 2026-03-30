@@ -34,8 +34,7 @@ jobs:
       - name: Install dependencies (fresh)
         working-directory: ./growth/stx-growth-bot
         run: |
-          npm install --prefer-online --no-audit --no-fund --no-package-lock \
-          || npm install
+          npm install --prefer-online --no-audit --no-fund --no-package-lock || npm install
 
       # 💡 Delay to mimic human timing
       - name: Delay
